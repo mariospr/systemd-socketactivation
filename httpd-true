@@ -33,12 +33,15 @@ class SockInheritHTTPServer(BaseHTTPServer.HTTPServer):
                                            handler,
                                            bind_and_activate=False)
 
-        # The socket from systemd needs to be set AFTER calling the parent's
-        # class's constructor, otherwise HTTPServer.__init__() will re-set
-        # self.socket() and the handover won't work.
-        self.socket = get_systemd_socket()
+        if os.environ.get('LISTEN_PID', None) == str(os.getpid()):
+            # The socket from systemd needs to be set AFTER calling the parent's
+            # class's constructor, otherwise HTTPServer.__init__() will re-set
+            # self.socket() and the handover won't work.
+            self.socket = get_systemd_socket()
 
         if bind_and_activate:
+            if not os.environ.get('LISTEN_PID', None):
+                self.server_bind()
             self.server_activate()
 
 
@@ -55,9 +58,6 @@ def wait_loop(delay=60):
 
 
 if __name__ == "__main__":
-    if os.environ.get('LISTEN_PID', None) == str(os.getpid()):
-        wait_loop()
-        print("Done serving, shutting down")
-        sys.exit()
-    else:
-        raise SystemExit("This server should only run from systemd")
+    wait_loop()
+    print("Done serving, shutting down")
+    sys.exit()
