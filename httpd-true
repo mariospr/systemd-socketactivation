@@ -1,20 +1,20 @@
-#!/bin/env python3
+#!/bin/env python2
 import os
 import sys
 import time
 import socket
-import http.server
+import BaseHTTPServer
 
 
 def get_systemd_socket():
     """Shows how to get the socket"""
     SYSTEMD_FIRST_SOCKET_FD = 3
-    socket_type = http.server.HTTPServer.socket_type
-    address_family = http.server.HTTPServer.address_family
+    socket_type = BaseHTTPServer.HTTPServer.socket_type
+    address_family = BaseHTTPServer.HTTPServer.address_family
     return socket.fromfd(SYSTEMD_FIRST_SOCKET_FD, address_family, socket_type)
 
 
-class RequestHandler(http.server.BaseHTTPRequestHandler):
+class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """Returns the string 'true' to all requests"""
     def do_GET(self):
         self.send_response(200)
@@ -25,13 +25,13 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
     do_POST = do_GET
 
 
-class SockInheritHTTPServer(http.server.HTTPServer):
+class SockInheritHTTPServer(BaseHTTPServer.HTTPServer):
     def __init__(self, address_info, handler, bind_and_activate=True):
         # Note that we call it with bind_and_activate = False.
-        http.server.HTTPServer.__init__(self,
-                                        address_info,
-                                        handler,
-                                        bind_and_activate=False)
+        BaseHTTPServer.HTTPServer.__init__(self,
+                                           address_info,
+                                           handler,
+                                           bind_and_activate=False)
 
         # The socket from systemd needs to be set AFTER calling the parent's
         # class's constructor, otherwise HTTPServer.__init__() will re-set
@@ -47,9 +47,9 @@ def wait_loop(delay=60):
     # socket ourselves. Pass it in as localhost:80
     httpserv = SockInheritHTTPServer(('localhost', 80), RequestHandler)
     httpserv.timeout = 1
-    start = time.monotonic()
+    start = time.clock()
     end = start + delay
-    while time.monotonic() < end:
+    while time.clock() < end:
         httpserv.handle_request()
     httpserv.server_close()
 
