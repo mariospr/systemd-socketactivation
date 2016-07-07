@@ -1,5 +1,5 @@
 [Unit]
-Description=HTTPD true
+Description=HTTPD true (flatpak)
 
 [Socket]
 ListenStream=8009

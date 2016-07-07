@@ -1,5 +1,5 @@
 [Unit]
-Description=Httpd true
+Description=Httpd true (flatpak)
 
 [Service]
 ExecStart=/usr/bin/flatpak run --env="LISTEN_PID=true" org.mariospr.SocketActivation
