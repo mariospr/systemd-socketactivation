@@ -1,0 +1,38 @@
+{
+    "app-id": "org.mariospr.SocketActivation",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "master",
+    "sdk": "org.gnome.Sdk",
+    "command": "httpd-true",
+    "finish-args": [
+        /* X11 + XShm access */
+        "--share=ipc", "--socket=x11",
+        /* Network access */
+        "--share=network",
+        /* Wayland access */
+        "--socket=wayland",
+        "--socket=session-bus",
+        /* Needed for dconf to work */
+        "--filesystem=xdg-run/dconf", "--filesystem=~/.config/dconf:ro",
+        "--filesystem=/tmp",
+        "--talk-name=ca.desrt.dconf", "--env=DCONF_USER_CONFIG_DIR=.config/dconf"
+    ],
+    "cleanup": [],
+    "modules": [
+        {
+            "name": "httpd-true",
+            "no-autogen": true,
+            "sources": [
+                {
+                    "type": "file",
+                    "path": "Makefile-flatpak",
+                    "dest-filename": "Makefile"
+                },
+                {
+                    "type": "file",
+                    "path": "httpd-true"
+                }
+            ]
+        }
+    ]
+}
