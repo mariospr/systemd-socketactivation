@@ -4,8 +4,17 @@ import sys
 import time
 import socket
 import BaseHTTPServer
-from systemd import journal
 
+DEBUG_FILE_PATH = '/tmp/errorlog.txt'
+
+def debug_init():
+    dbg_file = open(DEBUG_FILE_PATH, 'w')
+    dbg_file.close()
+
+def debug_log(msg):
+    dbg_file = open(DEBUG_FILE_PATH, 'a')
+    dbg_file.write('[httpd-true] %s\n' % msg)
+    dbg_file.close()
 
 def get_systemd_socket():
     """Shows how to get the socket"""
@@ -18,7 +27,7 @@ def get_systemd_socket():
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """Returns the string 'true' to all requests"""
     def do_GET(self):
-        journal.send('[httpd-true] do GET received')
+        debug_log('[httpd-true] do GET received')
 
         self.send_response(200)
         self.end_headers()
@@ -36,28 +45,28 @@ class SockInheritHTTPServer(BaseHTTPServer.HTTPServer):
                                            handler,
                                            bind_and_activate=False)
 
-        journal.send('[httpd-true] systemd socket 1: %s' % repr(self.socket))
+        debug_log('[httpd-true] systemd socket 1: %s' % repr(self.socket))
         if os.environ.get('LISTEN_PID', None) == str(os.getpid()):
             # The socket from systemd needs to be set AFTER calling the parent's
             # class's constructor, otherwise HTTPServer.__init__() will re-set
             # self.socket() and the handover won't work.
             self.socket = get_systemd_socket()
 
-        journal.send('[httpd-true] systemd socket 2: %s' % repr(self.socket))
+        debug_log('[httpd-true] systemd socket 2: %s' % repr(self.socket))
 
         if bind_and_activate:
             if not os.environ.get('LISTEN_PID', None):
                 self.server_bind()
             self.server_activate()
 
-        journal.send('[httpd-true] systemd socket 3: %s' % repr(self.socket))
+        debug_log('[httpd-true] systemd socket 3: %s' % repr(self.socket))
 
 
 
 def wait_loop(delay=60):
     # The connection/port/host doesn't really matter as we don't allocate the
     # socket ourselves. Pass it in as localhost:80
-    journal.send('[httpd-true] wait loop')
+    debug_log('[httpd-true] wait loop')
     httpserv = SockInheritHTTPServer(('localhost', 8008), RequestHandler)
     httpserv.timeout = 1
     start = time.clock()
@@ -67,11 +76,15 @@ def wait_loop(delay=60):
     httpserv.server_close()
 
 if __name__ == "__main__":
+
+    debug_init()
+
     if os.environ.get('LISTEN_PID', None) == str(os.getpid()):
-        journal.send('[httpd-true] SOCKET ACTIVATED!')
+        debug_log('[httpd-true] SOCKET ACTIVATED!')
     else:
-        journal.send('[httpd-true] MANUALLY RUN!')
+        debug_log('[httpd-true] MANUALLY RUN!')
 
     wait_loop()
     print("Done serving, shutting down")
+
     sys.exit()
