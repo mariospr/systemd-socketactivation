@@ -1,0 +1,61 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]; then
+    echo "Use: http-true-ctl <service> <command>"
+    exit 1
+fi
+
+SERVICE_NAME="${1}"
+COMMAND="${2}"
+
+stop()
+{
+    echo "Stopping socket..."
+    systemctl stop ${SERVICE_NAME}.socket
+    systemctl disable ${SERVICE_NAME}.socket
+
+    echo "Stopping service..."
+    systemctl stop ${SERVICE_NAME}.service
+    systemctl disable ${SERVICE_NAME}.service
+}
+
+start()
+{
+    echo "Starting socket..."
+    systemctl enable ${SERVICE_NAME}.socket
+    systemctl start ${SERVICE_NAME}.socket
+}
+
+restart()
+{
+    stop
+    systemctl daemon-reload
+    start
+}
+
+status()
+{
+    echo "Current status:"
+    systemctl status ${SERVICE_NAME}.socket
+    systemctl status ${SERVICE_NAME}.service
+}
+
+if [ "x$COMMAND" = "xstart" ]; then
+    start
+elif [ "x$COMMAND" = "xstop" ]; then
+    stop
+elif [ "x$COMMAND" = "xrestart" ]; then
+    restart
+elif [ "x$COMMAND" = "xstatus" ]; then
+    status
+    exit 0
+else
+    echo "Command not supported"
+    exit 1
+fi
+
+echo "Killing running services..."
+kill -9 `pidof python2` 2> /dev/null
+echo
+
+exit 0
