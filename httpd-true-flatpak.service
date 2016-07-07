@@ -2,7 +2,7 @@
 Description=Httpd true (flatpak)
 
 [Service]
-ExecStart=/usr/bin/flatpak run --env="LISTEN_PID=true" org.mariospr.SocketActivation
+ExecStart=/usr/bin/flatpak run --no-desktop --env="LISTEN_PID=true" org.mariospr.SocketActivation
 User=mario
 
 PrivateTmp=yes
